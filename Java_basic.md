@@ -1,4 +1,26 @@
 
+### Constructors
+
+- When a constructor runs, it immediately calls its superclass constructors, all the way up the chain until you get to the class Object constructor
+- To invoke a superclass constructor, the only way is call `super()`. It MUST be the first statement in a constructor
+- Use `this()` to call a constructor from another overloaded constructor in the same class. It MUST be the first statement in a constructor (so a constructor can never have both super() and this())
+```java
+// if you do not provide a constructor, the compiler puts a default one:
+public className() {
+	super();
+}
+
+// if provide a constructor without a call to super()
+// the compiler will call super() without arguments in each of your overloaded constructors
+```
+
+### Accesss levels
+
+ - public: any code anywhere can access it
+ - protected: same as default, except it also allows access from subclasses of the class
+ - default (no modifiers): can be accessed from any class within the same package, but is inaccessible to classes in different packages.
+ - private: private to the class, not to the object (Accessing the private field of another object of the same class is allowed)
+
 ### Generics
 
 ```java
@@ -169,8 +191,63 @@ import java.util.concurrent.Executors;
 ExecutorService executor = Executors.newSingleThreadExecutor();		// single thread executor
 executor.execute(task);		// run the job
 executor.shutdown();		// shut down the ExecutorService
-
-
 ```
 
+### Synchronization
 
+Use `synchronized` keyword on a method or an object, to lock only one thread can use it at a time
+```java
+// on objects
+private void goShoppint(int amount) {
+	synchronized (account) {
+		if (account.getBalance() >= amount) {;}
+	}
+}
+
+public synchronized void spend(String name, int amount) {}
+
+// synchronize a block of code
+public void go() {
+	doStuff();
+
+	synchronized(this) {
+		criticalStuff();
+	}
+}
+```
+
+#### Atomic variables
+
+Atomic variables make a variable can be used safely by a thread without worring about another thread changing the object's values at the same time
+```java
+import java.util.concurrent.atomic.AtomicInteger; 	// AtomicLong, AtomicBoolean, AtomicReference
+
+class Balance {
+	AtomicInteger balance = new AtomicInteger(0);
+
+	public void increment() {
+		count.incrementAndGet();	// adds one to the value, no need to add "synchronized"
+	}
+
+	public void spend(String name, int amount) {
+		int initialBalance = balance.get();
+		// CAS: `compareAndSet(expectedValue, newValue)`
+		// sets to new value only if the current value is the as the expected.
+		boolean success = balance.compareAndSet(initialBalance, initialBalance - amount);
+		if (success) {;} else {;}
+	}
+}
+```
+When an object's data cannot be changed, we call it an **immutable object**.
+Make an object immutqable if you are going to share it between threads and do not want the threads to change its data. \
+Note making an object field `final` does NOT guarantee the **data inside** that object won't change, just that the **reference** won't change. E.g. we might want to use `CopyOnWriteArrayList`, which is a thread-safe variant of `ArrayList`
+```java
+// we don't want to allow subclasses that might add mutable values
+public final class Chat {
+	private final String message;	// thread-safe
+
+	public Chat(String message) {
+		this.message = message;
+	}
+}
+```
